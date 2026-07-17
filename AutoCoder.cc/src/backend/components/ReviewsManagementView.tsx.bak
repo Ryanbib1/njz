@@ -1,0 +1,206 @@
+'use client'
+import React from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import type { ReviewsManagementState, ReviewsManagementHandlers } from '@/backend/hooks/useReviewsManagement'
+
+interface Props {
+  state: ReviewsManagementState
+  handlers: ReviewsManagementHandlers
+}
+
+export const ReviewsManagementView = ({ state, handlers }: Props) => {
+  return (
+    <div>
+      <header>
+        <h1>Reviews Management</h1>
+        <p>Data synchronization status: {state.presentCount}/{state.totalSlots} Slots Present</p>
+      </header>
+
+      <div>
+        {/* Left Pane: Reviews Verification List */}
+        <section>
+          <header>
+            <h2>Reviews Verification List</h2>
+          </header>
+          
+          {state.isLoading ? (
+            <div>Loading review slots...</div>
+          ) : state.reviews.length === 0 ? (
+            <div>No reviews data available.</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Reviewer</th>
+                  <th>Time</th>
+                  <th>Rating</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {state.reviews.map((review) => (
+                  <tr key={review.review_slot}>
+                    <td>Slot 0{review.review_slot}</td>
+                    <td>{review.author_name || '-'}</td>
+                    <td>{review.relative_time || '-'}</td>
+                    <td>{review.rating ? `${review.rating} Stars` : '-'}</td>
+                    <td>{state.MATCH_STATUS_LABELS[review.match_status]}</td>
+                    <td>
+                      <Button 
+                        variant="secondary" 
+                        disabled={state.isLoading}
+                        onClick={() => handlers.handleSelectSlot(review.review_slot)}
+                      >
+                        {review.is_present ? 'Edit Review' : 'Create Review'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        {/* Right Pane: Review Detail & Editor Panel */}
+        <section>
+          {!state.activeSlotNumber ? (
+            <div>
+              <p>Please select a review slot from the list to view or edit its details.</p>
+            </div>
+          ) : !state.activeReview ? (
+            <div>Loading detail context...</div>
+          ) : (
+            <form onSubmit={handlers.handleSave}>
+              <header>
+                <h2>Slot 0{state.activeReview.review_slot}</h2>
+                <span>{state.MATCH_STATUS_LABELS[state.activeReview.match_status]}</span>
+                {state.activeReview.is_present && state.activeReview.review_id && (
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    disabled={state.isSaving}
+                    onClick={() => handlers.openDeleteConfirmation(state.activeReview!.review_id!, state.activeReview!.review_slot)}
+                  >
+                    Delete Review
+                  </Button>
+                )}
+              </header>
+
+              <div>
+                <label>
+                  <span>Author Name</span>
+                  <Input 
+                    value={state.formData.author_name} 
+                    onChange={(e) => handlers.handleFormFieldChange('author_name', e.target.value)}
+                    placeholder="Enter author name"
+                    disabled={state.isSaving}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label>
+                  <span>Rating (1-5)</span>
+                  <Input 
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={state.formData.rating} 
+                    onChange={(e) => handlers.handleFormFieldChange('rating', e.target.value)}
+                    placeholder="Enter rating"
+                    disabled={state.isSaving}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label>
+                  <span>Relative Time</span>
+                  <Input 
+                    value={state.formData.relative_time} 
+                    onChange={(e) => handlers.handleFormFieldChange('relative_time', e.target.value)}
+                    placeholder="e.g. 2 weeks ago"
+                    disabled={state.isSaving}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label>
+                  <span>Verbatim Review Content</span>
+                  <Textarea 
+                    value={state.formData.content} 
+                    onChange={(e) => handlers.handleFormFieldChange('content', e.target.value)}
+                    placeholder="Enter the exact review text"
+                    disabled={state.isSaving}
+                    required
+                  />
+                </label>
+              </div>
+
+              <footer>
+                <Button 
+                  type="submit" 
+                  disabled={state.isSaving}
+                >
+                  {state.activeReview.is_present ? 'Update Review' : 'Save Review'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  disabled={state.isSaving}
+                  onClick={handlers.handleClearSelection}
+                >
+                  Cancel Edit
+                </Button>
+              </footer>
+            </form>
+          )}
+        </section>
+      </div>
+
+      {/* Deletion Confirmation Dialog */}
+      <Dialog open={state.deleteContext.isOpen} onOpenChange={(open) => !open && handlers.closeDeleteConfirmation()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Review Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this review? This will immediately remove the review from the homepage and change its slot status to Missing. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={handlers.closeDeleteConfirmation}
+              disabled={state.isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handlers.confirmDelete}
+              disabled={state.isDeleting}
+            >
+              Confirm Deletion
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

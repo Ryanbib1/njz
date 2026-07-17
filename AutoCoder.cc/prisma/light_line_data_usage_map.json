@@ -1,0 +1,143 @@
+[
+  {
+    "ui_section_name": "Hero Section",
+    "target_model": "restaurant",
+    "target_fields": [
+      "name",
+      "brandStory",
+      "highlights",
+      "rating",
+      "reviewCount",
+      "address"
+    ],
+    "mapping_logic": "展示餐厅的核心品牌形象、评分摘要、简介及关键特色标签，提取自 HeroSection 组件的文案内容。",
+    "page_name": "frontend_home",
+    "page_key": "frontend_home",
+    "page_slug": "home",
+    "platform": "frontend"
+  },
+  {
+    "ui_section_name": "Atmosphere Gallery Section",
+    "target_model": "restaurantphoto",
+    "target_fields": [
+      "imageUrl",
+      "alt",
+      "description"
+    ],
+    "mapping_logic": "展示餐厅的环境与菜品相册，数据来源于 galleryImages 数组，通过 map 循环渲染。",
+    "page_name": "frontend_home",
+    "page_key": "frontend_home",
+    "page_slug": "home",
+    "platform": "frontend"
+  },
+  {
+    "ui_section_name": "Reviews List",
+    "target_model": "restaurantreview",
+    "target_fields": [
+      "authorName",
+      "content",
+      "rating"
+    ],
+    "mapping_logic": "展示真实的客人口碑评价，数据提取自 ReviewsAndContactSection 中的 testimonials 数组。",
+    "page_name": "frontend_home",
+    "page_key": "frontend_home",
+    "page_slug": "home",
+    "platform": "frontend"
+  },
+  {
+    "ui_section_name": "Contact & Logistics",
+    "target_model": "restaurant",
+    "target_fields": [
+      "address",
+      "phone",
+      "website"
+    ],
+    "mapping_logic": "展示餐厅的具体地理位置、预约电话及地图导航链接，数据提取自 ReviewsAndContactSection 的地址文案和 mapUrl 变量。",
+    "page_name": "frontend_home",
+    "page_key": "frontend_home",
+    "page_slug": "home",
+    "platform": "frontend"
+  },
+  {
+    "ui_section_name": "Operating Hours",
+    "target_model": "restauranthour",
+    "target_fields": [
+      "fullLine"
+    ],
+    "mapping_logic": "展示餐厅的营业时间安排，数据提取自 ReviewsAndContactSection 中的 Opening Hours 列表文案。",
+    "page_name": "frontend_home",
+    "page_key": "frontend_home",
+    "page_slug": "home",
+    "platform": "frontend"
+  },
+  {
+    "ui_section_name": "KPI Summary Cards",
+    "target_model": "restaurant",
+    "target_fields": [
+      "rating",
+      "reviewCount"
+    ],
+    "mapping_logic": "展示餐厅的核心评分及总评论数，对应代码中 verified score 和 59 reviews 文案。",
+    "page_name": "backend_admin_home",
+    "page_key": "backend_admin_home",
+    "page_slug": "admin_home",
+    "platform": "backend"
+  },
+  {
+    "ui_section_name": "Store Profile Form",
+    "target_model": "restaurant",
+    "target_fields": [
+      "name",
+      "brandStory",
+      "phone",
+      "website",
+      "address"
+    ],
+    "mapping_logic": "提供餐厅基础信息的可编辑表单，对应 businessName, description, phone, website, address 状态变量。",
+    "page_name": "backend_admin_home",
+    "page_key": "backend_admin_home",
+    "page_slug": "admin_home",
+    "platform": "backend"
+  },
+  {
+    "ui_section_name": "Business Hours Manager",
+    "target_model": "restauranthour",
+    "target_fields": [
+      "weekday",
+      "fullLine"
+    ],
+    "mapping_logic": "管理餐厅每周营业时间，对应 hours 状态数组中的 day 和 time。",
+    "page_name": "backend_admin_home",
+    "page_key": "backend_admin_home",
+    "page_slug": "admin_home",
+    "platform": "backend"
+  },
+  {
+    "ui_section_name": "Storefront Gallery Manager",
+    "target_model": "restaurantphoto",
+    "target_fields": [
+      "imageUrl",
+      "description",
+      "sortOrder"
+    ],
+    "mapping_logic": "管理餐厅展示图片，对应 galleryImages 数组，通过 map 渲染网格视图。",
+    "page_name": "backend_admin_home",
+    "page_key": "backend_admin_home",
+    "page_slug": "admin_home",
+    "platform": "backend"
+  },
+  {
+    "ui_section_name": "Live Guest Review Feed",
+    "target_model": "restaurantreview",
+    "target_fields": [
+      "authorName",
+      "content",
+      "rating"
+    ],
+    "mapping_logic": "展示精选宾客评价列表，对应 reviews 数组数据。",
+    "page_name": "backend_admin_home",
+    "page_key": "backend_admin_home",
+    "page_slug": "admin_home",
+    "platform": "backend"
+  }
+]

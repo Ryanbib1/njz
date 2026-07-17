@@ -1,0 +1,277 @@
+'use client'
+import React from 'react'
+import type { 
+  RecordStatus, 
+  MatchStatus
+} from '@/backend/actions/PhotosManagement';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetFooter,
+  SheetDescription
+} from "@/components/ui/sheet";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import type { PhotosManagementState, PhotosManagementHandlers } from '@/backend/hooks/usePhotosManagement'
+
+// ===== Enum Mappings (en-US) =====
+const RECORD_STATUS_LABELS: Record<RecordStatus, string> = {
+  PRESENT: 'Present',
+  MISSING: 'Missing',
+};
+
+const MATCH_STATUS_LABELS: Record<MatchStatus, string> = {
+  MATCHED: 'Matched',
+  MISMATCHED: 'Mismatched',
+};
+
+interface Props {
+  state: PhotosManagementState
+  handlers: PhotosManagementHandlers
+}
+
+export const PhotosManagementView = ({ state, handlers }: Props) => {
+  return (
+    <div>
+      <section>
+        <header>
+          <h2>Photos Management</h2>
+          <p>Manage the fixed 10-slot homepage gallery constraint.</p>
+        </header>
+
+        {state.isLoadingList && !state.listData && (
+          <div>Loading verification table...</div>
+        )}
+
+        {!state.isLoadingList && !state.listData && (
+          <div>Failed to load data. Please refresh.</div>
+        )}
+
+        {state.listData && (
+          <>
+            <article>
+              <div>
+                <span>Total Slots</span>
+                <strong>{state.listData.totalSlots}</strong>
+              </div>
+              <div>
+                <span>Present / Missing</span>
+                <strong>{state.listData.presentCount} / {state.listData.missingCount}</strong>
+              </div>
+              <div>
+                <span>Matched / Mismatched</span>
+                <strong>{state.listData.matchedCount} / {state.listData.mismatchedCount}</strong>
+              </div>
+              <div>
+                {state.listData.items.map((item) => (
+                  <span key={item.photoKey}>
+                    [{item.photoKey}: {item.recordStatus === 'PRESENT' ? '✓' : '✗'}]
+                  </span>
+                ))}
+              </div>
+            </article>
+
+            <div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Slot ID / Seq</TableHead>
+                    <TableHead>Image Preview</TableHead>
+                    <TableHead>Asset Metadata</TableHead>
+                    <TableHead>Source (URL)</TableHead>
+                    <TableHead>Record Status</TableHead>
+                    <TableHead>Match Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {state.listData.items.map((item) => (
+                    <TableRow key={item.photoKey}>
+                      <TableCell>
+                        <strong>{item.photoKey}</strong>
+                        <br />
+                        <small>Seq: {item.sortOrder}</small>
+                      </TableCell>
+                      <TableCell>
+                        {item.recordStatus === 'PRESENT' && item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.alt || 'Preview'} />
+                        ) : (
+                          <div>[MISSING SLOT]</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.recordStatus === 'PRESENT' ? (
+                          <>
+                            <strong>Alt:</strong> {item.alt}
+                            <br />
+                            <strong>Desc:</strong> {item.description}
+                          </>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.imageUrl ? item.imageUrl : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={item.recordStatus === 'PRESENT' ? 'default' : 'secondary'}>
+                          {RECORD_STATUS_LABELS[item.recordStatus]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.matchStatus ? (
+                          <Badge variant={item.matchStatus === 'MATCHED' ? 'outline' : 'destructive'}>
+                            {MATCH_STATUS_LABELS[item.matchStatus]}
+                          </Badge>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.recordStatus === 'PRESENT' && item.id ? (
+                          <div>
+                            <Button variant="secondary" size="sm" onClick={() => handlers.handleOpenEdit(item.id!)}>
+                              Edit
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handlers.handleOpenDelete(item.id!)}>
+                              Delete
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="sm" onClick={() => handlers.handleOpenCreate(item.photoKey)}>
+                            Create Record
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Slide-out Panel Editor */}
+      <Sheet open={!!state.activeItemInfo && !state.deleteTargetId} onOpenChange={(open) => !open && handlers.handleClosePanel()}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>
+              {state.activeItemInfo?.mode === 'create' ? `Create Missing Record: ${state.activeItemInfo?.item?.photoKey}` : `Edit Record: ${state.activeItemInfo?.item?.photoKey}`}
+            </SheetTitle>
+            <SheetDescription>
+              Modify the structured content for this gallery slot.
+            </SheetDescription>
+          </SheetHeader>
+
+          {state.isEditorLoading ? (
+            <div>Loading details...</div>
+          ) : (
+            <div>
+              <div>
+                {state.formData.imageUrl ? (
+                  <img src={state.formData.imageUrl} alt={state.formData.alt || 'Live preview'} />
+                ) : (
+                  <div>No Image Provided</div>
+                )}
+              </div>
+
+              <form>
+                <div>
+                  <Label>Slot Assignment</Label>
+                  <Input value={`${state.activeItemInfo?.item?.photoKey} (Sequence: ${state.activeItemInfo?.item?.sortOrder})`} disabled />
+                </div>
+
+                <div>
+                  <Label>Image URL</Label>
+                  <Input 
+                    value={state.formData.imageUrl} 
+                    onChange={(e) => handlers.handleFormFieldChange('imageUrl', e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                <div>
+                  <Label>Alt Text</Label>
+                  <Input 
+                    value={state.formData.alt} 
+                    onChange={(e) => handlers.handleFormFieldChange('alt', e.target.value)}
+                    placeholder="Descriptive text for accessibility"
+                  />
+                </div>
+
+                <div>
+                  <Label>Description</Label>
+                  <Textarea 
+                    value={state.formData.description} 
+                    onChange={(e) => handlers.handleFormFieldChange('description', e.target.value)}
+                    placeholder="Narrative caption"
+                  />
+                </div>
+              </form>
+
+              {!state.isFormValid && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    All required fields (Image URL, Alt Text, Description) must be filled to save configuration.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
+          <SheetFooter>
+            <Button variant="outline" onClick={handlers.handleClosePanel} disabled={state.isEditorSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handlers.handleSavePhoto} disabled={!state.isFormValid || state.isEditorSaving || state.isEditorLoading}>
+              Save Configuration
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Deletion Confirmation Modal */}
+      <Dialog open={!!state.deleteTargetId} onOpenChange={(open) => !open && handlers.handleCloseDelete()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Warning: Removing this record will change its slot status to MISSING and instantly remove the image from the frontend homepage gallery. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handlers.handleCloseDelete} disabled={state.isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handlers.handleConfirmDelete} disabled={state.isDeleting}>
+              Confirm Deletion
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

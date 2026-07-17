@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap'); /* [demo] */
+
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: "Playfair Display", serif; /* [demo] */ /* hero / display */
+  --font-header: "Cormorant Garamond", serif; /* [demo] */ /* section / heading */
+  --font-body: "Inter", sans-serif; /* [demo] */ /* body / dense reading */
+
+  --color-background: var(--background); /* [demo] */
+  --color-foreground: var(--foreground); /* [demo] */
+  --color-primary: var(--primary); /* [demo] */
+  --color-primary-foreground: var(--primary-foreground); /* [demo] */
+  --color-secondary: var(--secondary); /* [demo] */
+  --color-secondary-foreground: var(--secondary-foreground); /* [demo] */
+  --color-accent: var(--accent); /* [demo] */
+  --color-accent-foreground: var(--accent-foreground); /* [demo] */
+  --color-muted: var(--muted); /* [demo] */
+  --color-muted-foreground: var(--muted-foreground); /* [demo] */
+  --color-destructive: var(--destructive); /* [demo] */
+  --color-destructive-foreground: var(--destructive-foreground); /* [demo] */
+  --color-card: var(--card); /* [demo] */
+  --color-card-foreground: var(--card-foreground); /* [demo] */
+  --color-popover: var(--popover); /* [demo] */
+  --color-popover-foreground: var(--popover-foreground); /* [demo] */
+  --color-border: var(--border); /* [demo] */
+  --color-input: var(--input); /* [demo] */
+  --color-ring: var(--ring); /* [demo] */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --shadow-xs: 0 2px 10px -1px rgba(168, 124, 78, 0.05); /* [demo] */ /* hover card / small panel */
+  --shadow-sm: 0 4px 20px -2px rgba(168, 124, 78, 0.1); /* [demo] */ /* popover / menu */
+  --shadow-md: 0 10px 40px -4px rgba(45, 41, 38, 0.15); /* [demo] */ /* drawer / raised module */
+  
+  --radius-sm: 2px; /* [demo] */ /* compact controls */
+  --radius-md: 4px; /* [demo] */ /* default interactive */
+  --radius-lg: 0px; /* [demo] */ /* card / modal */
+}
+
+@layer base {
+  :root {
+    --background: #F7F3E8; /* [demo] */
+    --foreground: #2D2926; /* [demo] */
+    --primary: #B43A2B; /* [demo] */
+    --primary-foreground: #F7F3E8; /* [demo] */
+    --secondary: #A87C4E; /* [demo] */
+    --secondary-foreground: #F7F3E8; /* [demo] */
+    --accent: #D9C5A3; /* [demo] */
+    --accent-foreground: #2D2926; /* [demo] */
+    --muted: #E8E2D2; /* [demo] */
+    --muted-foreground: #6B645E; /* [demo] */
+    --destructive: #7F1D1D; /* [demo] */
+    --destructive-foreground: #F7F3E8; /* [demo] */
+    --card: #FDFBFA; /* [demo] */
+    --card-foreground: #2D2926; /* [demo] */
+    --popover: #FDFBFA; /* [demo] */
+    --popover-foreground: #2D2926; /* [demo] */
+    --border: #A87C4E; /* [demo] */
+    --input: #E8E2D2; /* [demo] */
+    --ring: #B43A2B; /* [demo] */
+    
+    --chart-1: #B43A2B;
+    --chart-2: #A87C4E;
+    --chart-3: #6B705C;
+    --chart-4: #D9C5A3;
+    --chart-5: #3A3532;
+  }
+}
+
+/*
+ * Next 根布局先加载 @/index.css，再加载本文件；本文件内的 Tailwind Preflight 含 `* { border: 0 solid }`，
+ * 会作为更晚的 @layer base 覆盖 index.css 里对 border-color 的修复。必须在「本 Tailwind 入口」内、Preflight 之后
+ * 再设一次默认 border-color（前台 theme-style 已在 @layer base 中对 * 做过同类处理）。
+ */
+@layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, var(--border, #d6dde8));
+  }
+}

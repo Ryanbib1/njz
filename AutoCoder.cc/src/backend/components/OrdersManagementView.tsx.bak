@@ -1,0 +1,369 @@
+'use client'
+
+import React from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import type { FoodOrderStatus, PaymentStatus } from '@/backend/actions/OrdersManagement'
+import { 
+  useOrdersManagement, 
+  OrdersManagementState, 
+  OrdersManagementHandlers,
+  FOOD_ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_PROVIDER_LABELS 
+} from '@/backend/hooks/useOrdersManagement'
+
+interface Props {
+  state: OrdersManagementState
+  handlers: OrdersManagementHandlers
+}
+
+export const OrdersManagementView = ({ state, handlers }: Props) => {
+  return (
+    <div>
+      {/* Action Area & Metrics */}
+      <section>
+        <div>
+          <Button onClick={handlers.handleExport} disabled={state.isExporting || state.isListLoading}>
+            {state.isExporting ? 'Exporting...' : 'Export Orders'}
+          </Button>
+          <Button variant="secondary" onClick={handlers.handleRefresh} disabled={state.isListLoading}>
+            Refresh
+          </Button>
+        </div>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Preparation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{state.isListLoading ? '-' : state.metrics.pendingPreparation}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Ready for Pickup</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{state.isListLoading ? '-' : state.metrics.readyForPickup}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Payment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{state.isListLoading ? '-' : state.metrics.pendingPayment}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Today</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{state.isListLoading ? '-' : state.metrics.completedToday}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <hr />
+
+      {/* Filters */}
+      <section>
+        <fieldset disabled={state.isListLoading}>
+          <legend>Filter Orders</legend>
+          
+          <label>
+            Search:
+            <Input 
+              value={state.localSearchInput} 
+              onChange={(e) => handlers.setLocalSearchInput(e.target.value)}
+              placeholder="Order No, Name, Phone"
+            />
+          </label>
+
+          <label>
+            Order Status:
+            <Select 
+              value={state.statusFilter} 
+              onValueChange={(val) => handlers.setStatusFilter(val as FoodOrderStatus | 'ALL')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                {Object.entries(FOOD_ORDER_STATUS_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+
+          <label>
+            Payment Status:
+            <Select 
+              value={state.paymentFilter} 
+              onValueChange={(val) => handlers.setPaymentFilter(val as PaymentStatus | 'ALL')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Payments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Payments</SelectItem>
+                {Object.entries(PAYMENT_STATUS_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+
+          <label>
+            Date Start:
+            <Input 
+              type="date" 
+              value={state.dateStart} 
+              onChange={(e) => handlers.setDateStart(e.target.value)} 
+            />
+          </label>
+
+          <label>
+            Date End:
+            <Input 
+              type="date" 
+              value={state.dateEnd} 
+              onChange={(e) => handlers.setDateEnd(e.target.value)} 
+            />
+          </label>
+
+          <Button onClick={handlers.handleApplyFilters}>Apply Filters</Button>
+          <Button variant="ghost" onClick={handlers.handleClearFilters}>Clear</Button>
+        </fieldset>
+      </section>
+
+      <hr />
+
+      {/* Data Grid */}
+      <section>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Order Number</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Customer Info</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Payment Status</TableHead>
+              <TableHead>Order Status</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {state.isListLoading ? (
+              <TableRow>
+                <TableCell colSpan={7}>Loading orders...</TableCell>
+              </TableRow>
+            ) : state.orderList.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7}>No orders found matching the criteria.</TableCell>
+              </TableRow>
+            ) : (
+              state.orderList.map((order) => (
+                <TableRow key={order.foodOrder_id}>
+                  <TableCell>{order.foodOrder_number}</TableCell>
+                  <TableCell>{new Date(order.foodOrder_created_at).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {order.pickup_contact_name} <br />
+                    <small>{order.pickup_phone}</small>
+                  </TableCell>
+                  <TableCell>{order.total_amount.toFixed(2)}</TableCell>
+                  <TableCell>{PAYMENT_STATUS_LABELS[order.payment_status]}</TableCell>
+                  <TableCell>{FOOD_ORDER_STATUS_LABELS[order.foodOrder_status]}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" size="sm" onClick={() => handlers.handleViewDetail(order.foodOrder_id)}>
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Pagination Bar */}
+        <div>
+          <span>
+            Showing page {state.page} of {state.totalPages} ({state.totalCount} total records)
+          </span>
+          <Button 
+            variant="outline" 
+            disabled={state.page <= 1 || state.isListLoading} 
+            onClick={() => handlers.handlePageChange(state.page - 1)}
+          >
+            Previous
+          </Button>
+          <Button 
+            variant="outline" 
+            disabled={state.page >= state.totalPages || state.isListLoading} 
+            onClick={() => handlers.handlePageChange(state.page + 1)}
+          >
+            Next
+          </Button>
+          <Select 
+            value={state.pageSize.toString()} 
+            onValueChange={handlers.handlePageSizeChange}
+            disabled={state.isListLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Rows per page" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10 / page</SelectItem>
+              <SelectItem value="20">20 / page</SelectItem>
+              <SelectItem value="50">50 / page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </section>
+
+      {/* Order Detail Side Panel */}
+      <Sheet open={state.isDetailOpen} onOpenChange={handlers.handleCloseDetail}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Order Details</SheetTitle>
+            <SheetDescription>
+              {state.orderDetail ? `Order #${state.orderDetail.foodOrder_number}` : 'Loading...'}
+            </SheetDescription>
+          </SheetHeader>
+
+          {state.isDetailLoading ? (
+            <div>Loading order details...</div>
+          ) : !state.orderDetail ? (
+            <div>Order not found or unable to load.</div>
+          ) : (
+            <div>
+              {/* Panel Header Actions */}
+              <div>
+                <p><strong>Created:</strong> {new Date(state.orderDetail.foodOrder_created_at).toLocaleString()}</p>
+                <Button variant="outline" onClick={handlers.handlePrintTicket}>Print Ticket</Button>
+              </div>
+
+              <hr />
+
+              {/* Operational Control Section */}
+              <section>
+                <h3>Operational Status</h3>
+                <p>Current Status: <strong>{FOOD_ORDER_STATUS_LABELS[state.orderDetail.foodOrder_status]}</strong></p>
+                
+                <fieldset disabled={state.isUpdatingStatus}>
+                  {state.orderDetail.foodOrder_status === 'PAID' && (
+                    <Button onClick={() => handlers.handleUpdateStatus('PREPARING')}>
+                      Start Preparing
+                    </Button>
+                  )}
+                  {state.orderDetail.foodOrder_status === 'PREPARING' && (
+                    <Button onClick={() => handlers.handleUpdateStatus('READY_FOR_PICKUP')}>
+                      Mark Ready for Pickup
+                    </Button>
+                  )}
+                  {state.orderDetail.foodOrder_status === 'READY_FOR_PICKUP' && (
+                    <Button onClick={() => handlers.handleUpdateStatus('COMPLETED')}>
+                      Complete Order
+                    </Button>
+                  )}
+                  {(state.orderDetail.foodOrder_status === 'PENDING_PAYMENT' || state.orderDetail.foodOrder_status === 'PAID') && (
+                    <Button variant="destructive" onClick={() => handlers.handleUpdateStatus('CANCELLED')}>
+                      Cancel Order
+                    </Button>
+                  )}
+                </fieldset>
+              </section>
+
+              <hr />
+
+              {/* Pickup Contact Summary Section */}
+              <section>
+                <h3>Contact & Fulfillment</h3>
+                <p><strong>Method:</strong> {state.orderDetail.fulfillment_method}</p>
+                <p><strong>Name:</strong> {state.orderDetail.pickup_contact_name}</p>
+                <p><strong>Phone:</strong> {state.orderDetail.pickup_phone}</p>
+                <p><strong>Email:</strong> {state.orderDetail.customer_email}</p>
+              </section>
+
+              <hr />
+
+              {/* Ordered Items List Section */}
+              <section>
+                <h3>Ordered Items</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item Name</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {state.orderDetail.foodOrder_items?.map((item) => (
+                      <TableRow key={item.item_id}>
+                        <TableCell>
+                          {item.item_name}
+                          {item.item_notes && (
+                            <>
+                              <br />
+                              <small>Note: {item.item_notes}</small>
+                            </>
+                          )}
+                        </TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.unit_price.toFixed(2)}</TableCell>
+                        <TableCell>{item.line_total.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {(!state.orderDetail.foodOrder_items || state.orderDetail.foodOrder_items.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={4}>No items found for this order.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </section>
+
+              <hr />
+
+              {/* Financial & Payment Summary Section */}
+              <section>
+                <h3>Financial Summary</h3>
+                <p><strong>Subtotal:</strong> {state.orderDetail.subtotal_amount.toFixed(2)}</p>
+                <p><strong>Total Amount:</strong> {state.orderDetail.total_amount.toFixed(2)}</p>
+                <p><strong>Payment Status:</strong> {PAYMENT_STATUS_LABELS[state.orderDetail.payment_status]}</p>
+                {state.orderDetail.paid_at && (
+                  <p><strong>Paid At:</strong> {new Date(state.orderDetail.paid_at).toLocaleString()}</p>
+                )}
+                <p><strong>Payment Provider:</strong> {PAYMENT_PROVIDER_LABELS[state.orderDetail.payment_provider]}</p>
+                {state.orderDetail.payment_out_trade_no && (
+                  <p><strong>Transaction Ref:</strong> {state.orderDetail.payment_out_trade_no}</p>
+                )}
+                {state.orderDetail.payment_session_id && (
+                  <p><strong>Session ID:</strong> {state.orderDetail.payment_session_id}</p>
+                )}
+              </section>
+
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  )
+}
+
+export default function OrdersManagementPage() {
+  const { state, handlers } = useOrdersManagement()
+  return <OrdersManagementView state={state} handlers={handlers} />
+}

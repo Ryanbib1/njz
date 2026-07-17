@@ -1,0 +1,304 @@
+@config "../tailwind.config.ts";
+@import "tailwindcss" source(none);
+@source "../src";
+@source "../app";
+@source "../components";
+
+@layer base {
+  html, body { height: 100%; }
+  body { 
+    background-color: var(--color-background, var(--background));
+    color:var(--color-foreground, var(--foreground));
+    @apply antialiased;
+  }
+
+  /*
+   * Radix RadioGroupItem：可见的是 role="radio" 的 button，后面还跟一个用于表单的原生 input[type=radio]。
+   * 不显式去掉 appearance 时，部分浏览器仍会画出原生圆环，且绝对定位无 inset 时会落在按钮下方，看起来像「两个圆点」。
+   */
+   button[role="radio"] + input[type="radio"][aria-hidden="true"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+
+  :root {
+    --calendar-invert: 0; /* 默认浅色模式，不反转 */
+  }
+  
+  [data-theme='dark'] {
+    --calendar-invert: 1; /* 深色模式，完全反转 */
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(var(--calendar-invert));
+  }
+   /* 全局隐藏滚动条 - 适用于所有元素 */
+   * {
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE 和 Edge */
+    -ms-overflow-style: none;
+  }
+
+  /* WebKit 浏览器 (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  *::-webkit-scrollbar-track {
+    display: none;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    display: none;
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes drift-slow {
+  0%, 100% {
+    transform: translate3d(-8px, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(8px, -12px, 0) rotate(1deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * 明显档动画原语（visible tier）
+ * 与上方氛围档（float-subtle/drift-slow/pulse-soft）并列。
+ * 幅度大、时长短、带旋转/发光/位移，用于用户明确要"动态/有创意/看得见的动画"。
+ * 同名 animation 工具类已在 tailwind.config.ts 注册（css + config 双写，缺一不生效）。
+ * ────────────────────────────────────────────────────────────── */
+@keyframes float-bold {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(20px) rotate(-5deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px currentColor; }
+  50%      { box-shadow: 0 0 40px currentColor, 0 0 60px currentColor; }
+}
+
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+
+@keyframes bounce-bold {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(1px, 1px); }
+}
+
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes rgb-shift {
+  0%, 100% { text-shadow: -2px 0 #ff00ff, 2px 0 #00d4ff; }
+  50%      { text-shadow: 2px 0 #ff00ff, -2px 0 #00d4ff; }
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes clay-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-20px) rotate(2deg); }
+}
+
+@keyframes clay-float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-30px) rotate(5deg); }
+}
+
+@keyframes clay-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+
+
+/* 覆盖默认的颜色类名，映射到语义化配色 */
+@layer utilities {
+
+
+  @media (min-width: 1024px) {
+    .container {
+      max-width: 920px;
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .container {
+      max-width: 1180px;
+    }
+  }
+
+  @media (min-width: 1440px) {
+    .container {
+      max-width: 1280px;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .container {
+      max-width: 1536px;
+    }
+  }
+  /* 注意：所有颜色、排版、间距、阴影的映射现已完全迁移至 tailwind.config.ts */
+
+  /* 增强 ToggleGroupItem 的选中状态对比度 - 完全使用主题色变量 */
+  .data-\[state\=on\]\:bg-primary[data-state="on"] { 
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--color-foreground, var(--foreground)) 10%, transparent);
+  }
+  
+  /* 未选中状态的样式 - 使用muted色 */
+  [data-radix-collection-item][data-state="off"] {
+    background-color: var(--color-muted);
+    color: var(--color-muted-foreground);
+    border: 1px solid var(--color-border);
+  }
+  
+  [data-radix-collection-item][data-state="off"]:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  
+  /* 禁用状态的样式 */
+  [data-radix-collection-item][data-disabled] {
+    background-color: color-mix(in srgb, var(--color-muted) 50%, transparent);
+    color: color-mix(in srgb, var(--color-muted-foreground) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+    cursor: not-allowed;
+  }
+
+  /* Recharts 适配 */
+  [data-slot="chart"] .recharts-cartesian-axis-tick text {
+    fill: var(--color-muted-foreground) !important;
+  }
+}
+
+/* 覆盖浏览器 autofill 背景色 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 5000s ease-in-out 0s;
+  background-color: transparent !important;
+}
+
+
+/*
+ * Preflight（@layer base）对 * 使用 `border: 0 solid`，省略的 border-color 为 currentColor。
+ * 原先在更早的 @layer base 里 `* { @apply border-border }` 会排在 Preflight 之前合并，无法覆盖简写里的颜色；
+ * 只加 `border-b` 时分割线会跟正文同色。放在**本文件末尾**的 @layer base，合并后会排在 Preflight 之后。
+ * 勿改为未分层 `*`，否则会压过 utilities 里的 border-primary / border-input 等。
+ */
+ @layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, var(--border, #d8e1ee));
+  }
+}
+
+
+/* 覆盖 .list-item 类名与 CSS display: list-item 的冲突 */
+.list-item {
+  display: flex !important;
+  list-style: none !important;
+}
+.list-item::marker,
+.list-item::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* 无障碍：用户系统开启"减少动态效果"时，停掉所有循环装饰动画（不影响一次性入场过渡） */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-subtle,
+  .animate-drift-slow,
+  .animate-pulse-soft,
+  .animate-float-bold,
+  .animate-float-reverse,
+  .animate-pulse-glow,
+  .animate-gradient-shift,
+  .animate-spin-slow,
+  .animate-wiggle,
+  .animate-bounce-bold,
+  .animate-glitch,
+  .animate-scanline,
+  .animate-rgb-shift,
+  .animate-blink,
+  .animate-clay-float,
+  .animate-clay-float-slow,
+  .animate-clay-breathe {
+    animation: none !important;
+  }
+}

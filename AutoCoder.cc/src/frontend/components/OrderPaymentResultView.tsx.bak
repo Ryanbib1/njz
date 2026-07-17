@@ -1,0 +1,174 @@
+'use client'
+
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import type { OrderPaymentResultState, OrderPaymentResultHandlers } from '@/frontend/hooks/useOrderPaymentResult';
+
+interface Props {
+  state: OrderPaymentResultState;
+  handlers: OrderPaymentResultHandlers;
+}
+
+export const OrderPaymentResultView = ({ state, handlers }: Props) => {
+  const { 
+    isLoading, 
+    orderData, 
+    errorState, 
+    formattedDate, 
+    isSuccess, 
+    foodOrderStatusLabels 
+  } = state;
+
+  const { handleRetryPayment, handleReturnToMenu } = handlers;
+
+  if (isLoading) {
+    return (
+      <main>
+        <div>Loading transaction details...</div>
+      </main>
+    );
+  }
+
+  if (errorState || !orderData) {
+    return (
+      <main>
+        <header>
+          <h1>TRANSACTION RECORD UNAVAILABLE</h1>
+          <p>We could not locate the details for this transaction.</p>
+        </header>
+      </main>
+    );
+  }
+
+  return (
+    <main>
+      {/* Section 1: The Result Hero */}
+      <header>
+        <div>
+          {/* Status Indicator logic inherently structural here, downstream UI assigns colors */}
+          <div aria-hidden="true" /> 
+        </div>
+        
+        {isSuccess ? (
+          <div>
+            <h1>GRAZIE.</h1>
+            <p>Your culinary experience is confirmed and currently being prepared.</p>
+          </div>
+        ) : (
+          <div>
+            <h1>TRANSACTION DECLINED.</h1>
+            <p>We were unable to process your payment. Please review your details and attempt the transaction again.</p>
+          </div>
+        )}
+        <Separator />
+      </header>
+
+      {/* Section 2: The Order Dossier */}
+      <section>
+        {/* Left Column: The Ledger */}
+        <article>
+          <h2>PURCHASE LEDGER</h2>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>QTY</TableHead>
+                <TableHead>ITEM</TableHead>
+                <TableHead>TOTAL</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orderData.order_items.map((item) => (
+                <TableRow key={item.item_id}>
+                  <TableCell>{item.item_quantity}</TableCell>
+                  <TableCell>
+                    <div>{item.item_name}</div>
+                    {item.item_notes && (
+                      <p>{item.item_notes}</p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {orderData.order_currency} {item.item_line_total.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </article>
+
+        {/* Right Column: The Manifesto */}
+        <aside>
+          <h2>ORDER DETAILS</h2>
+          <dl>
+            <div>
+              <dt>ORDER NO.</dt>
+              <dd>{orderData.order_number}</dd>
+            </div>
+            <div>
+              <dt>DATE</dt>
+              <dd>{formattedDate}</dd>
+            </div>
+            <div>
+              <dt>PAYMENT REF</dt>
+              <dd>{orderData.order_payment_out_trade_no || 'N/A'}</dd>
+            </div>
+          </dl>
+
+          <Separator />
+
+          {isSuccess ? (
+            <div>
+              <h3>PICKUP DIRECTIVE</h3>
+              <dl>
+                <div>
+                  <dt>CONTACT</dt>
+                  <dd>{orderData.order_pickup_contact_name}</dd>
+                </div>
+                <div>
+                  <dt>TELEPHONE</dt>
+                  <dd>{orderData.order_pickup_phone}</dd>
+                </div>
+                <div>
+                  <dt>STATUS</dt>
+                  <dd>{foodOrderStatusLabels[orderData.order_food_status]}</dd>
+                </div>
+              </dl>
+              <p>Please present this order number to the maître d&apos; upon arrival.</p>
+            </div>
+          ) : (
+            <div>
+              <h3>RESOLUTION</h3>
+              <Button variant="default" onClick={handleRetryPayment}>
+                RETRY PAYMENT
+              </Button>
+              <Button variant="outline" onClick={handleReturnToMenu}>
+                RETURN TO MENU
+              </Button>
+            </div>
+          )}
+        </aside>
+
+        {/* Section 3: The Financial Summary */}
+        <footer>
+          <Separator />
+          <div>
+            <span>SUBTOTAL</span>
+            <span>{orderData.order_currency} {orderData.order_subtotal_amount.toFixed(2)}</span>
+          </div>
+          <div>
+            <h2>TOTAL SETTLEMENT</h2>
+            <h2>{orderData.order_currency} {orderData.order_total_amount.toFixed(2)}</h2>
+          </div>
+        </footer>
+      </section>
+    </main>
+  );
+};

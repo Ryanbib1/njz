@@ -1,0 +1,128 @@
+'use client'
+
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import type { AdminRegisterState, AdminRegisterHandlers } from '@/backend/hooks/useAdminRegister';
+
+interface Props {
+  state: AdminRegisterState;
+  handlers: AdminRegisterHandlers;
+}
+
+export const AdminRegisterView = ({ state, handlers }: Props) => {
+  const { form, isSubmitting, isSuccess } = state;
+  const { handleFormFieldChange, handleSubmit, handleNavigateToLogin } = handlers;
+
+  return (
+    <main>
+      <article>
+        
+        {/* Left Column: Brand & Context Pane */}
+        <aside>
+          <header>
+            <h1>Tavola Italian Dining</h1>
+            <h2>Administration Portal</h2>
+          </header>
+          <figure>
+            {/* Editorial Graphic Area placeholder */}
+            <figcaption>Hospitality Management System</figcaption>
+          </figure>
+        </aside>
+
+        {/* Right Column: Interaction & Form Pane */}
+        <section>
+          {!isSuccess ? (
+            /* State A: Registration Form */
+            <div>
+              <header>
+                <h2>Admin Registration</h2>
+                <p>Create a backend access account to manage the administration portal.</p>
+              </header>
+
+              <form onSubmit={handleSubmit}>
+                <fieldset disabled={isSubmitting}>
+                  <div>
+                    <Label htmlFor="member_account">Account Username</Label>
+                    <Input
+                      id="member_account"
+                      type="text"
+                      placeholder="Enter a unique username"
+                      value={form.member_account}
+                      onChange={(e) => handleFormFieldChange('member_account', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="member_email">Email Address</Label>
+                    <Input
+                      id="member_email"
+                      type="email"
+                      placeholder="admin@tavola.com"
+                      value={form.member_email}
+                      onChange={(e) => handleFormFieldChange('member_email', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="member_password">Password</Label>
+                    <Input
+                      id="member_password"
+                      type="password"
+                      placeholder="Enter a secure password"
+                      value={form.member_password}
+                      onChange={(e) => handleFormFieldChange('member_password', e.target.value)}
+                      required
+                    />
+                  </div>
+                </fieldset>
+
+                <div>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Creating...' : 'Create Admin Account'}
+                  </Button>
+                </div>
+              </form>
+
+              <footer>
+                <p>Already have an admin account?</p>
+                <Button variant="link" onClick={handleNavigateToLogin} disabled={isSubmitting}>
+                  Sign in here
+                </Button>
+              </footer>
+            </div>
+          ) : (
+            /* State B: Creation Result Panel */
+            <div>
+              <div>
+                {/* Status Indicator Icon Placeholder */}
+                <span>[ Success ]</span>
+              </div>
+              
+              <header>
+                <h3>Registration Successful</h3>
+              </header>
+              
+              <div>
+                <p>
+                  Your ADMIN account has been successfully created and its status is now ACTIVE.
+                  You can now use these credentials to access the administration portal.
+                </p>
+              </div>
+              
+              <div>
+                <Button onClick={handleNavigateToLogin}>
+                  Proceed to Login
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+      </article>
+    </main>
+  );
+};

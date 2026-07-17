@@ -1,0 +1,325 @@
+'use client'
+
+import React from 'react'
+import type { WeekdayKey } from '@/backend/actions/BusinessInfoManagement'
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import type { 
+  BusinessInfoManagementState, 
+  BusinessInfoManagementHandlers 
+} from '@/backend/hooks/useBusinessInfoManagement'
+
+interface Props {
+  state: BusinessInfoManagementState
+  handlers: BusinessInfoManagementHandlers
+}
+
+export const BusinessInfoManagementView = ({ state, handlers }: Props) => {
+  if (state.isLoading) {
+    return <div>Loading business profile...</div>
+  }
+
+  if (!state.profileData || !state.identityForm) {
+    return <div>Failed to load data. Please refresh.</div>
+  }
+
+  return (
+    <main>
+      <header>
+        <div>
+          <Badge variant={state.profileData.is_dataset_complete ? "default" : "destructive"}>
+            Dataset Status: {state.profileData.is_dataset_complete ? 'Complete' : 'Incomplete'}
+          </Badge>
+        </div>
+        <div>
+          <Button onClick={handlers.handleSaveIdentity} disabled={state.isSavingIdentity}>
+            {state.isSavingIdentity ? "Saving..." : "Save Configuration"}
+          </Button>
+        </div>
+      </header>
+
+      <section>
+        {/* Left Column: Data Management Pane */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Core Identity Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label>Restaurant Name</Label>
+                <Input 
+                  value={state.identityForm.restaurant_name} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_name', e.target.value)} 
+                />
+              </div>
+              <div>
+                <Label>Physical Address</Label>
+                <Textarea 
+                  value={state.identityForm.restaurant_address} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_address', e.target.value)} 
+                />
+              </div>
+              <div>
+                <Label>Contact Phone</Label>
+                <Input 
+                  value={state.identityForm.restaurant_phone} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_phone', e.target.value)} 
+                />
+              </div>
+              <div>
+                <Label>Official Website URL</Label>
+                <Input 
+                  value={state.identityForm.restaurant_website} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_website', e.target.value)} 
+                />
+              </div>
+              <div>
+                <Label>Aggregate Rating</Label>
+                <Input 
+                  type="number"
+                  step="0.1"
+                  value={state.identityForm.restaurant_rating} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_rating', parseFloat(e.target.value) || 0)} 
+                />
+              </div>
+              <div>
+                <Label>Total Review Count</Label>
+                <Input 
+                  type="number"
+                  value={state.identityForm.restaurant_reviewCount} 
+                  onChange={(e) => handlers.handleIdentityChange('restaurant_reviewCount', parseInt(e.target.value, 10) || 0)} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Schedule Records</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label>Missing Line Recovery Selector</Label>
+                <div>
+                  <Select 
+                    value={state.recoverWeekday} 
+                    onValueChange={handlers.setRecoverWeekday} 
+                    disabled={state.missingWeekdays.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={state.missingWeekdays.length > 0 ? "Select missing weekday" : "No missing days"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {state.missingWeekdays.map(wd => (
+                        <SelectItem key={wd} value={wd}>
+                          {state.labels.weekday[wd as WeekdayKey]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    placeholder="Enter full display line" 
+                    value={state.recoverLine}
+                    onChange={(e) => handlers.setRecoverLine(e.target.value)}
+                    disabled={!state.recoverWeekday}
+                  />
+                  <Button onClick={handlers.handleRecoverHour} disabled={!state.recoverWeekday || state.isRecovering}>
+                    Recover
+                  </Button>
+                </div>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Weekday</TableHead>
+                    <TableHead>Display Line</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {state.profileData.hours_records.map(record => (
+                    <TableRow key={record.hour_weekday}>
+                      <TableCell>{state.labels.weekday[record.hour_weekday as WeekdayKey]}</TableCell>
+                      <TableCell>
+                        {record.hour_recordStatus === 'PRESENT' ? (
+                          <Input 
+                            value={state.hoursLines[record.hour_weekday] ?? ''}
+                            onChange={(e) => handlers.handleHourLineChange(record.hour_weekday, e.target.value)}
+                          />
+                        ) : (
+                          <span>{state.labels.recordStatus.MISSING}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {record.hour_recordStatus === 'PRESENT' && record.hour_id && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handlers.handleSaveHour(record.hour_id!, record.hour_weekday)}
+                            >
+                              Save Line
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handlers.handleDeleteHour(record.hour_id!)}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Validation & System Status Pane */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Source Alignment Audit</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <section>
+                <h3>Identity Validation List</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Field Target</TableHead>
+                      <TableHead>Live Value</TableHead>
+                      <TableHead>Source Value</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_name}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_name}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.name_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.name_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Address</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_address}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_address}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.address_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.address_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Phone</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_phone}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_phone}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.phone_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.phone_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Website</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_website}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_website}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.website_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.website_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Rating</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_rating}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_rating}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.rating_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.rating_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Review Count</TableCell>
+                      <TableCell>{state.profileData.identity_info.restaurant_reviewCount}</TableCell>
+                      <TableCell>{state.profileData.identity_source.source_reviewCount}</TableCell>
+                      <TableCell>
+                        <Badge variant={state.profileData.identity_validation.reviewCount_status === 'MATCHED' ? "default" : "destructive"}>
+                          {state.labels.matchStatus[state.profileData.identity_validation.reviewCount_status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </section>
+
+              <section>
+                <h3>Hours Validation List</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Weekday Target</TableHead>
+                      <TableHead>Live Line</TableHead>
+                      <TableHead>Source Line</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {state.profileData.hours_records.map(record => (
+                      <TableRow key={`audit-${record.hour_weekday}`}>
+                        <TableCell>{state.labels.weekday[record.hour_weekday as WeekdayKey]}</TableCell>
+                        <TableCell>{record.hour_fullLine || '--'}</TableCell>
+                        <TableCell>{record.hour_sourceFullLine}</TableCell>
+                        <TableCell>
+                          {record.hour_recordStatus === 'MISSING' ? (
+                            <Badge variant="destructive">{state.labels.recordStatus.MISSING}</Badge>
+                          ) : (
+                            <Badge variant={record.hour_matchStatus === 'MATCHED' ? "default" : "secondary"}>
+                              {record.hour_matchStatus ? state.labels.matchStatus[record.hour_matchStatus] : '--'}
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </section>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Deployment Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label>Frontend Synchronization Confirmation</Label>
+                <p>Synced with public homepage rendering engine.</p>
+              </div>
+              <div>
+                <Label>Last System Update Timestamp</Label>
+                <p>{new Date(state.profileData.last_system_update).toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </main>
+  )
+}

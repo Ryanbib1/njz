@@ -1,0 +1,85 @@
+'use client'
+import React from 'react'
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import type { AdminLoginState, AdminLoginHandlers } from '@/backend/hooks/useAdminLogin'
+
+interface Props {
+  state: AdminLoginState
+  handlers: AdminLoginHandlers
+}
+
+export const AdminLoginView = ({ state, handlers }: Props) => {
+  if (state.isCheckingSession) {
+    return (
+      <main>
+        <div>Loading session state...</div>
+      </main>
+    );
+  }
+
+  return (
+    <main>
+      <section>
+        <header>
+          <h1>Tavola Italian Dining</h1>
+          <p>Management & Operations</p>
+          <img alt="Atmospheric culinary detail or table setting for Tavola Italian Dining" />
+        </header>
+      </section>
+      
+      <section>
+        <header>
+          <h2>Admin Access</h2>
+          <p>Authorized backend management only.</p>
+        </header>
+        
+        <form onSubmit={handlers.handleSubmit}>
+          <div>
+            <Label htmlFor="account">Account</Label>
+            <Input
+              id="account"
+              value={state.form.member_account}
+              onChange={(e) => handlers.handleFormFieldChange('member_account', e.target.value)}
+              disabled={state.isLoading}
+              placeholder="Enter your admin account"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={state.form.member_password}
+              onChange={(e) => handlers.handleFormFieldChange('member_password', e.target.value)}
+              disabled={state.isLoading}
+              placeholder="Enter your password"
+            />
+          </div>
+          
+          <Button 
+            type="submit" 
+            disabled={state.isLoading || !state.form.member_account || !state.form.member_password}
+          >
+            Sign In
+          </Button>
+        </form>
+        
+        <hr />
+        
+        <footer>
+          <p>Backend-only access. First-time setup required?</p>
+          <Button 
+            variant="link" 
+            onClick={handlers.handleNavigateToRegister}
+            disabled={state.isLoading}
+          >
+            Admin Register
+          </Button>
+        </footer>
+      </section>
+    </main>
+  );
+}

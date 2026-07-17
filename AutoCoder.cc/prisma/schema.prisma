@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../prisma-generated/client"
+}
+
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:pzprod@database-prod-lts.cluster-c7wk8uc6itjv.us-west-2.rds.amazonaws.com:3306/proj_43bb5105_snap_20260716_073319_373"
+}
+
+enum platform_role {
+  GUEST
+  ADMIN
+}
+
+enum weekday_key {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model member {
+  id        String    @id @default(uuid()) @db.VarChar(36)
+  account   String    @unique @db.VarChar(50)
+  password  String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(100)
+  role      platform_role
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+}
+
+model restaurant {
+  id          String             @id @default(uuid()) @db.VarChar(36)
+  name        String             @db.VarChar(255)
+  address     String             @db.Text
+  phone       String             @db.VarChar(50)
+  website     String             @db.VarChar(700)
+  rating      Decimal            @db.Decimal(2, 1) // 评分（X分）
+  reviewCount Int                // 评论数（X条）
+  brandStory  String             @db.Text
+  highlights  Json               // 亮点列表，格式: ["prefix lunch menu","pizza","sparkling juice"]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @default(now())
+  photos      restaurantphoto[]
+  reviews     restaurantreview[]
+  hours       restauranthour[]
+}
+
+model restaurantphoto {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  restaurantId String     @db.VarChar(36) // FK → restaurant.id
+  photoKey     String     @unique @db.VarChar(50)
+  sortOrder    Int        // 排序（第X位）
+  alt          String     @db.VarChar(255)
+  description  String     @db.Text
+  imageUrl     String     @db.VarChar(700)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now())
+
+  restaurant   restaurant @relation(fields: [restaurantId], references: [id])
+}
+
+model restaurantreview {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  restaurantId String     @db.VarChar(36) // FK → restaurant.id
+  reviewSlot   Int        @unique // 固定评论槽位（第X条）
+  authorName   String     @db.VarChar(255)
+  rating       Int        // 评分（X分）
+  relativeTime String     @db.VarChar(100)
+  content      String     @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now())
+
+  restaurant   restaurant @relation(fields: [restaurantId], references: [id])
+}
+
+model restauranthour {
+  id           String      @id @default(uuid()) @db.VarChar(36)
+  restaurantId String      @db.VarChar(36) // FK → restaurant.id
+  weekday      weekday_key @unique
+  sortOrder    Int         // 排序（第X位）
+  fullLine     String      @db.VarChar(255)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now())
+
+  restaurant   restaurant  @relation(fields: [restaurantId], references: [id])
+}
+enum payment_provider {
+  CLINK
+}
+
+enum payment_status {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum food_order_status {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  READY_FOR_PICKUP
+  COMPLETED
+  CANCELLED
+}
+
+model foodOrder {
+  id                String             @id @default(uuid()) @db.VarChar(36)
+  orderNumber       String             @unique @db.VarChar(50)
+  fulfillmentMethod String             @db.VarChar(30)
+  pickupContactName String             @db.VarChar(120)
+  pickupPhone       String             @db.VarChar(50)
+  customerEmail     String             @db.VarChar(150)
+  subtotalAmount    Decimal            @db.Decimal(10, 2)
+  totalAmount       Decimal            @db.Decimal(10, 2)
+  currency          String             @default("CNY") @db.VarChar(10)
+  paymentProvider   payment_provider
+  paymentSessionId  String?            @db.VarChar(120)
+  paymentOutTradeNo String?            @db.VarChar(120)
+  paymentStatus     payment_status     @default(PENDING)
+  orderStatus       food_order_status  @default(PENDING_PAYMENT)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  food_order_item   foodOrderItem[]
+
+  @@map("food_order")
+}
+
+model foodOrderItem {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  orderId      String     @db.VarChar(36)
+  itemName     String     @db.VarChar(255)
+  unitPrice    Decimal    @db.Decimal(10, 2)
+  quantity     Int
+  lineTotal    Decimal    @db.Decimal(10, 2)
+  notes        String?    @db.VarChar(255)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  order        foodOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("food_order_item")
+}
